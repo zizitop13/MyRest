@@ -1,7 +1,7 @@
 spring:
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:${mysql.test.port:3306}/runway_product?createDatabaseIfNotExist=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:${mysql.test.port:3306}/test?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: root
     password: root
 debug: false
