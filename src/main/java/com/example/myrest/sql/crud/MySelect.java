@@ -19,7 +19,7 @@ public class MySelect {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> execute(MyTable myTable){
-        String selectQuery = selectQuery(myTable);
+        String selectQuery = myTable.select();
         log.info("Select query: {}", selectQuery);
         return jdbcTemplate
                 .queryForList(selectQuery)
@@ -27,10 +27,6 @@ public class MySelect {
                 .parallel()
                 .map(this::convertKeysToCamelCase)
                 .collect(Collectors.toList());
-    }
-
-    private static String selectQuery(MyTable myTable) {
-        return "SELECT * FROM " + myTable.getName();
     }
 
     public Map<String, Object> convertKeysToCamelCase(Map<String, Object> inputMap) {

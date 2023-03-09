@@ -6,21 +6,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MyInsert {
+public class MyDelete {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public int execute(MyTable myTable, Map<String, String> updateMap) {
-        String insert = myTable.insert(updateMap);
-        log.info("Insert query: {}", insert);
-        return jdbcTemplate.update(insert);
+    public int execute(MyTable myTable, Object id) {
+        String update = myTable.delete(id);
+        log.info("Delete query: {}", update);
+        return jdbcTemplate.update(update);
     }
-
 }
