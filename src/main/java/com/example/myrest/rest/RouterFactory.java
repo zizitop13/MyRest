@@ -7,7 +7,7 @@ import com.example.myrest.sql.crud.MyUpdate;
 import com.example.myrest.sql.model.MySchema;
 import com.example.myrest.sql.model.MyTable;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
+import org.springdoc.core.fn.builders.requestbody.Builder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.HandlerFunction;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -15,8 +15,14 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import static org.springdoc.core.fn.builders.content.Builder.contentBuilder;
+import static org.springdoc.core.fn.builders.requestbody.Builder.requestBodyBuilder;
+import static org.springdoc.core.fn.builders.schema.Builder.schemaBuilder;
 import static org.springdoc.webmvc.core.fn.SpringdocRouteBuilder.route;
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON;
 
 
 @Component
@@ -33,13 +39,32 @@ public class RouterFactory {
                 .forEach(table -> {
                             String context = getContext(table);
                             builder.GET(context, createGetHandler(table), ops -> ops.operationId("get_" + table.getName()))
-                                   .POST(context, createPostHandler(table), ops -> ops.operationId("post_" + table.getName()))
+                                   .POST(context, createPostHandler(table), getBuilderConsumer(table)
+                                   )
                                    .POST(context + "/update", createUpdateHandler(table), ops -> ops.operationId("update_" + table.getName()))
                                    .DELETE(context, createDeleteHandler(table), ops -> ops.operationId("delete_" + table.getName()));
                         }
 
                 );
         return builder.build();
+    }
+
+    private Consumer<org.springdoc.core.fn.builders.operation.Builder> getBuilderConsumer(MyTable table) {
+        return ops -> ops
+                .operationId("post_" + table.getName())
+                .description("Insert into " + table.getName())
+                .requestBody(requestBodyBuilder()
+                        .required(true)
+                        .content(contentBuilder()
+                                .schema(schemaBuilder()
+                                        .example(table.getColumns()
+                                                .stream()
+                                                .map(myColumn -> "\"" + myColumn.getName() + "\": " + "random")
+                                                .collect(Collectors.joining(",", "{ ", " }"))))
+
+                                .mediaType(APPLICATION_JSON.toString())
+                        ))
+                .build();
     }
 
     private HandlerFunction<ServerResponse> createDeleteHandler(MyTable table) {
