@@ -3,6 +3,7 @@ package com.example.myrest.sql.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Collection;
 import java.util.List;
@@ -11,12 +12,16 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
+@ToString
 @RequiredArgsConstructor
 public class MyTable {
 
     private final String name;
     private List<MyColumn> columns;
+
     private List<MyConstraint> constraints;
+
+    private List<MyColumn> primaryKey;
 
     public String select() {
         return "SELECT * FROM " + this.getName();
@@ -40,13 +45,15 @@ public class MyTable {
                         .collect(Collectors.joining(", ", "", ""));
     }
 
-    public String delete(Object id) {
-        return "DELETE FROM " + this.getName() + " WHERE " + getPkColumn().getName()
-                + " = " + (id instanceof String ? "\"" + id + "\"" : id);
+    public String delete(String pk) {
+        return "DELETE FROM " + this.getName() + " WHERE " + getPk().get(0).getName()
+                + " = " + pk;
     }
 
-    private MyColumn getPkColumn() {
-        return columns.get(0);
+    private List<MyColumn> getPk() {
+        return columns.stream()
+                .filter(MyColumn::isPrimaryKey)
+                .collect(Collectors.toList());
     }
 
 

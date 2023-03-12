@@ -15,8 +15,8 @@ public class MyDelete {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public int execute(MyTable myTable, Object id) {
-        String update = myTable.delete(id);
+    public int execute(MyTable myTable, String pk) {
+        String update = myTable.delete(pk);
         log.info("Delete query: {}", update);
         return jdbcTemplate.update(update);
     }

@@ -25,7 +25,7 @@ public class MySQLSchemaScanner {
         MySchema schema = null;
         try (Connection conn = dataSource.getConnection();
             ResultSet rs = conn.getMetaData().getCatalogs()) {
-            String schemaName = getSchemaName(dataSourceProperties.getUrl());
+            String schemaName = extractSchemaNameFromURL(dataSourceProperties.getUrl());
             while (rs.next()) {
                 String dbName = rs.getString("TABLE_CAT");
                 if (dbName.equals(schemaName)) {
@@ -39,7 +39,7 @@ public class MySQLSchemaScanner {
     }
 
     @SneakyThrows
-    private String getSchemaName(String jdbcUrl) {
+    private String extractSchemaNameFromURL(String jdbcUrl) {
         try {
             URI uri = new URI(jdbcUrl.substring(5));
             String path = uri.getPath();
@@ -69,17 +69,30 @@ public class MySQLSchemaScanner {
 
     private List<MyColumn> getColumns(MySchema schema, MyTable table, Connection conn) throws SQLException {
         List<MyColumn> columns = new ArrayList<>();
+        Set<String> primaryKeys = getPrimaryKeys(schema, table, conn);
         try (ResultSet rs = conn.getMetaData().getColumns(schema.getName(), null, table.getName(), null)) {
             while (rs.next()) {
                 String columnName = rs.getString("COLUMN_NAME");
                 String columnType = rs.getString("TYPE_NAME");
                 int columnSize = rs.getInt("COLUMN_SIZE");
                 boolean isNullable = rs.getInt("NULLABLE") == DatabaseMetaData.columnNullable;
-                MyColumn column = new MyColumn(columnName, columnType, columnSize, isNullable);
+                boolean isPrimaryKey = primaryKeys.contains(columnName);
+                MyColumn column = new MyColumn(columnName, columnType, columnSize, isNullable, isPrimaryKey);
                 columns.add(column);
             }
         }
         return columns;
+    }
+
+    private Set<String> getPrimaryKeys(MySchema schema, MyTable table, Connection conn) throws SQLException {
+        // Check if column is a primary key column
+        Set<String> keys = new HashSet<>();
+        ResultSet rsPrimaryKeys = conn.getMetaData().getPrimaryKeys(schema.getName(), null, table.getName());
+        while (rsPrimaryKeys.next()) {
+            String primaryKeyColumnName = rsPrimaryKeys.getString("COLUMN_NAME");
+            keys.add(primaryKeyColumnName);
+        }
+        return keys;
     }
 
     private List<MyConstraint> getConstraints(MySchema schema, MyTable table, Connection conn) throws SQLException {
