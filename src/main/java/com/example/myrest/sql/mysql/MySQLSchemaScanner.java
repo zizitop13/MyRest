@@ -1,9 +1,10 @@
-package com.example.myrest.sql;
+package com.example.myrest.sql.mysql;
 
-import com.example.myrest.sql.model.MyColumn;
-import com.example.myrest.sql.model.MyConstraint;
-import com.example.myrest.sql.model.MySchema;
-import com.example.myrest.sql.model.MyTable;
+import com.example.myrest.sql.api.MyTable;
+import com.example.myrest.sql.api.MyColumn;
+import com.example.myrest.sql.api.MyConstraint;
+import com.example.myrest.sql.api.MySchema;
+import com.example.myrest.sql.api.SchemaScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -11,17 +12,24 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import javax.sql.DataSource;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
-public class MySQLSchemaScanner {
+public class MySQLSchemaScanner implements SchemaScanner {
 
     private final DataSource dataSource;
 
     private final DataSourceProperties dataSourceProperties;
 
-    public MySchema getDatabaseSchema() throws SQLException {
+    @SneakyThrows
+    public MySchema getDatabaseSchema() {
         MySchema schema = null;
         try (Connection conn = dataSource.getConnection();
             ResultSet rs = conn.getMetaData().getCatalogs()) {

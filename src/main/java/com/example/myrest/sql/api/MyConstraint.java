@@ -1,4 +1,4 @@
-package com.example.myrest.sql.model;
+package com.example.myrest.sql.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;

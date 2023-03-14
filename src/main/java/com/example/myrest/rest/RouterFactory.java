@@ -1,13 +1,13 @@
 package com.example.myrest.rest;
 
-import com.example.myrest.sql.crud.MyDelete;
-import com.example.myrest.sql.crud.MyInsert;
-import com.example.myrest.sql.crud.MySelect;
-import com.example.myrest.sql.crud.MyUpdate;
-import com.example.myrest.sql.model.MySchema;
-import com.example.myrest.sql.model.MyTable;
+import com.example.myrest.sql.api.InsertRecord;
+import com.example.myrest.sql.api.MySchema;
+import com.example.myrest.sql.api.MyTable;
+import com.example.myrest.sql.mysql.MyDelete;
+import com.example.myrest.sql.mysql.MyInsert;
+import com.example.myrest.sql.mysql.MySelect;
+import com.example.myrest.sql.mysql.MyUpdate;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.fn.builders.requestbody.Builder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.HandlerFunction;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -85,7 +85,7 @@ public class RouterFactory {
 
     private HandlerFunction<ServerResponse> createPostHandler(MyTable table) {
         return request -> {
-            Map<String, String> body = request.body(Map.class);
+            InsertRecord body = InsertRecord.insert(request.body(Map.class));
             int updated = myInsert.execute(table, body);
             return ServerResponse.ok().body("{\"inserted\": \"" + updated + "\"}");
         };
