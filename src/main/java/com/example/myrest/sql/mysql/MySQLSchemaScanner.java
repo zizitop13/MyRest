@@ -1,9 +1,9 @@
 package com.example.myrest.sql.mysql;
 
-import com.example.myrest.sql.api.MyTable;
 import com.example.myrest.sql.api.MyColumn;
 import com.example.myrest.sql.api.MyConstraint;
 import com.example.myrest.sql.api.MySchema;
+import com.example.myrest.sql.api.MyTable;
 import com.example.myrest.sql.api.SchemaScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

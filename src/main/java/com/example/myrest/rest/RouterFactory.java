@@ -1,13 +1,13 @@
 package com.example.myrest.rest;
 
+import com.example.myrest.sql.api.Dao;
+import com.example.myrest.sql.api.Filter;
 import com.example.myrest.sql.api.InsertRecord;
 import com.example.myrest.sql.api.MySchema;
 import com.example.myrest.sql.api.MyTable;
-import com.example.myrest.sql.mysql.MyDelete;
-import com.example.myrest.sql.mysql.MyInsert;
-import com.example.myrest.sql.mysql.MySelect;
-import com.example.myrest.sql.mysql.MyUpdate;
+import com.example.myrest.sql.api.UpdateRecord;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.HandlerFunction;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -28,21 +28,20 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON;
 @Component
 @RequiredArgsConstructor
 public class RouterFactory {
-    private final MySelect mySelect;
-    private final MyInsert myInsert;
-    private final MyUpdate myUpdate;
-    private final MyDelete myDelete;
+    private final Dao dao;
 
     public RouterFunction<ServerResponse> init(MySchema schema) {
         var builder = route();
         schema.getTables()
                 .forEach(table -> {
                             String context = getContext(table);
-                            builder.GET(context, createGetHandler(table), ops -> ops.operationId("get_" + table.getName()))
-                                   .POST(context, createPostHandler(table), getBuilderConsumer(table)
-                                   )
-                                   .POST(context + "/update", createUpdateHandler(table), ops -> ops.operationId("update_" + table.getName()))
-                                   .DELETE(context, createDeleteHandler(table), ops -> ops.operationId("delete_" + table.getName()));
+                            builder.GET(context, createGetHandler(table), ops -> ops.operationId("get_" + table.getName())
+                                            .tag(table.getName()))
+                                    .POST(context, createPostHandler(table), getBuilderConsumer(table))
+                                    .POST(context + "/update", createUpdateHandler(table), ops -> ops.operationId("update_" + table.getName())
+                                            .tag(table.getName()))
+                                    .DELETE(context, createDeleteHandler(table), ops -> ops.operationId("delete_" + table.getName())
+                                            .tag(table.getName()));
                         }
 
                 );
@@ -51,6 +50,7 @@ public class RouterFactory {
 
     private Consumer<org.springdoc.core.fn.builders.operation.Builder> getBuilderConsumer(MyTable table) {
         return ops -> ops
+                .tag(table.getName())
                 .operationId("post_" + table.getName())
                 .description("Insert into " + table.getName())
                 .requestBody(requestBodyBuilder()
@@ -69,16 +69,18 @@ public class RouterFactory {
 
     private HandlerFunction<ServerResponse> createDeleteHandler(MyTable table) {
         return request -> {
-            String id = (String) request.attribute("pk").orElseThrow();
-            int updated = myDelete.execute(table, id);
+            String id = (String) request.attribute("id").orElseThrow();
+            int updated = dao.delete(table, Filter.builder()
+                    .pk(Map.of("id", id))
+                    .build());
             return ServerResponse.ok().body("{\"delete\": \"" + updated + "\"}");
         };
     }
 
     private HandlerFunction<ServerResponse> createUpdateHandler(MyTable table) {
         return request -> {
-            Map<String, String> body = request.body(Map.class);
-            int updated = myUpdate.execute(table, body);
+            UpdateRecord updateRecord = UpdateRecord.update(request.body(Map.class));
+            int updated = dao.update(table, updateRecord);
             return ServerResponse.ok().body("{\"updated\": \"" + updated + "\"}");
         };
     }
@@ -86,7 +88,7 @@ public class RouterFactory {
     private HandlerFunction<ServerResponse> createPostHandler(MyTable table) {
         return request -> {
             InsertRecord body = InsertRecord.insert(request.body(Map.class));
-            int updated = myInsert.execute(table, body);
+            int updated = dao.insert(table, body);
             return ServerResponse.ok().body("{\"inserted\": \"" + updated + "\"}");
         };
     }
@@ -97,7 +99,7 @@ public class RouterFactory {
 
     private HandlerFunction<ServerResponse> createGetHandler(MyTable myTable) {
         return request -> {
-            List<Map<String, Object>> result = mySelect.execute(myTable);
+            List<Map<String, Object>> result = dao.select(myTable, new Filter(), PageRequest.ofSize(400));
             return ServerResponse.ok().body(result);
         };
     }

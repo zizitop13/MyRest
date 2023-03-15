@@ -6,11 +6,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Filter {
-    private Object pk;
+    private Map<String, Object> pk;
+
+    public String eq(MyPrimaryKey myPrimaryKey){
+        String idName = myPrimaryKey.getColumns().get(0).getName();
+        return idName + "=" + pk.get(idName);
+    }
 }

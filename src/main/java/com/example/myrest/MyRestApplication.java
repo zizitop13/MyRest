@@ -2,6 +2,8 @@ package com.example.myrest;
 
 import com.example.myrest.rest.RouterFactory;
 import com.example.myrest.sql.api.MySchema;
+import com.example.myrest.sql.api.SQL;
+import com.example.myrest.sql.mysql.MySQL;
 import com.example.myrest.sql.mysql.MySQLSchemaScanner;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -42,5 +44,11 @@ public class MyRestApplication {
     public RouterFunction<ServerResponse> routerFunction(RouterFactory routerFactory, MySchema schema){
         return routerFactory.init(schema);
     }
+
+    @Bean
+    public SQL sql(){
+        return new MySQL();
+    }
+
 
 }
